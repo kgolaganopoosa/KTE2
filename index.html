@@ -13,11 +13,11 @@
 <body class="bg-gray-50 font-sans text-gray-800 min-h-screen flex flex-col">
 
   <!-- Navigation Bar -->
-  <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <i class="fa-solid font-bold text-2xl text-sky-400 fa-pump-soap"></i>
-        <span class="text-xl font-bold tracking-tight">KTE Cleaning Detergents <span class="text-sky-400">Direct</span></span>
+        <span class="text-xl font-bold tracking-tight">CleanPro <span class="text-sky-400">Direct</span></span>
       </div>
       
       <!-- View Switcher Tabs -->
@@ -25,8 +25,9 @@
         <button id="btn-store-view" onclick="switchView('store')" class="px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white">
           <i class="fa-solid fa-store mr-1.5"></i>Store
         </button>
-        <button id="btn-admin-view" onclick="switchView('admin')" class="px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white">
-          <i class="fa-solid fa-user-gear mr-1.5"></i>Admin Portal
+        <button id="btn-admin-view" onclick="handleAdminAccess()" class="px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white flex items-center">
+          <i class="fa-solid fa-lock mr-1.5 text-xs text-amber-400" id="admin-lock-icon"></i>
+          <span>Admin Portal</span>
         </button>
       </nav>
 
@@ -57,6 +58,22 @@
 
   <!-- ADMIN VIEW -->
   <main id="admin-view" class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 hidden">
+    <!-- Admin Top Control Bar -->
+    <div class="bg-slate-800 text-white p-4 rounded-xl mb-6 flex justify-between items-center shadow-sm">
+      <div class="flex items-center space-x-2">
+        <span class="inline-block w-2.5 h-2.5 bg-emerald-400 rounded-full"></span>
+        <span class="text-sm font-semibold">Admin Authenticated</span>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="changeAdminPassword()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 transition">
+          <i class="fa-solid fa-key mr-1"></i>Change Password
+        </button>
+        <button onclick="adminLogout()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition font-medium">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i>Logout
+        </button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
       <!-- Product Entry Form -->
@@ -130,6 +147,36 @@
     </div>
   </main>
 
+  <!-- ADMIN AUTH MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">Admin Authentication</h3>
+        <p class="text-xs text-gray-500 mt-1">Default password is <span class="font-mono font-bold bg-gray-100 px-1 py-0.5 rounded">1234</span></p>
+      </div>
+
+      <form onsubmit="verifyAdminPassword(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Enter Admin Password</label>
+          <input type="password" id="admin-pass-input" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm text-center font-mono text-lg tracking-widest"/>
+          <p id="auth-error" class="text-xs text-red-500 mt-1 hidden text-center font-medium">Incorrect password. Try again.</p>
+        </div>
+
+        <div class="flex space-x-2">
+          <button type="button" onclick="closeAuthModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg text-sm transition">
+            Cancel
+          </button>
+          <button type="submit" class="w-1/2 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 rounded-lg text-sm transition shadow-sm">
+            Unlock
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- CART DRAWER / MODAL -->
   <div id="cart-drawer" class="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50 hidden">
     <div class="bg-white w-full max-w-md h-full flex flex-col justify-between shadow-2xl">
@@ -178,10 +225,14 @@
       { id: 6, name: "Sulphonic Acid 96%", category: "Detergents Raw Materials", price: 620.00, unit: "5 kg Container", image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=400&q=80" }
     ];
 
-    // Reactive Application State
+    // State Variables
     let products = JSON.parse(localStorage.getItem('cpd_products')) || initialProducts;
     let cart = JSON.parse(localStorage.getItem('cpd_cart')) || [];
     let currentCategory = 'All';
+    let isAdminAuthenticated = false;
+
+    // Password Configuration
+    let adminPassword = localStorage.getItem('cpd_admin_pass') || '1234';
 
     // Application Initialization
     function init() {
@@ -200,7 +251,67 @@
       updateCartUI();
     }
 
-    // View Navigation
+    // Auth & Navigation Engine
+    function handleAdminAccess() {
+      if (isAdminAuthenticated) {
+        switchView('admin');
+      } else {
+        document.getElementById('auth-modal').classList.remove('hidden');
+        document.getElementById('admin-pass-input').value = '';
+        document.getElementById('auth-error').classList.add('hidden');
+        document.getElementById('admin-pass-input').focus();
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+
+    function verifyAdminPassword(event) {
+      event.preventDefault();
+      const inputPass = document.getElementById('admin-pass-input').value;
+
+      if (inputPass === adminPassword) {
+        isAdminAuthenticated = true;
+        closeAuthModal();
+        updateLockIcon();
+        switchView('admin');
+      } else {
+        document.getElementById('auth-error').classList.remove('hidden');
+      }
+    }
+
+    function adminLogout() {
+      isAdminAuthenticated = false;
+      updateLockIcon();
+      switchView('store');
+    }
+
+    function changeAdminPassword() {
+      const current = prompt("Enter current admin password:");
+      if (current === adminPassword) {
+        const newPass = prompt("Enter new admin password:");
+        if (newPass && newPass.trim() !== "") {
+          adminPassword = newPass.trim();
+          localStorage.setItem('cpd_admin_pass', adminPassword);
+          alert("Admin password updated successfully!");
+        } else {
+          alert("Password cannot be blank.");
+        }
+      } else if (current !== null) {
+        alert("Incorrect current password.");
+      }
+    }
+
+    function updateLockIcon() {
+      const lockIcon = document.getElementById('admin-lock-icon');
+      if (isAdminAuthenticated) {
+        lockIcon.className = "fa-solid fa-unlock mr-1.5 text-xs text-emerald-400";
+      } else {
+        lockIcon.className = "fa-solid fa-lock mr-1.5 text-xs text-amber-400";
+      }
+    }
+
     function switchView(view) {
       const storeView = document.getElementById('store-view');
       const adminView = document.getElementById('admin-view');
@@ -211,11 +322,11 @@
         storeView.classList.remove('hidden');
         adminView.classList.add('hidden');
         btnStore.className = "px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white";
-        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white";
-      } else {
+        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white flex items-center";
+      } else if (view === 'admin' && isAdminAuthenticated) {
         storeView.classList.add('hidden');
         adminView.classList.remove('hidden');
-        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white";
+        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white flex items-center";
         btnStore.className = "px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white";
       }
     }
