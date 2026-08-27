@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CleanPro Direct | Store & Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    .tab-active { border-bottom: 3px solid #0284c7; color: #0284c7; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen flex flex-col">
+
+  <!-- Navigation Bar -->
+  <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid font-bold text-2xl text-sky-400 fa-pump-soap"></i>
+        <span class="text-xl font-bold tracking-tight">KTE Cleaning Detergents <span class="text-sky-400">Direct</span></span>
+      </div>
+      
+      <!-- View Switcher Tabs -->
+      <nav class="flex space-x-1 bg-slate-800 p-1 rounded-lg">
+        <button id="btn-store-view" onclick="switchView('store')" class="px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white">
+          <i class="fa-solid fa-store mr-1.5"></i>Store
+        </button>
+        <button id="btn-admin-view" onclick="switchView('admin')" class="px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white">
+          <i class="fa-solid fa-user-gear mr-1.5"></i>Admin Portal
+        </button>
+      </nav>
+
+      <!-- Cart Toggle -->
+      <button onclick="toggleCartDrawer()" class="relative p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition">
+        <i class="fa-solid fa-cart-shopping text-xl text-sky-400"></i>
+        <span id="cart-count-badge" class="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- STORE VIEW -->
+  <main id="store-view" class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+    <!-- Category Filter Bar -->
+    <div class="flex flex-wrap gap-2 mb-8 border-b border-gray-200 pb-4" id="category-filters">
+      <button onclick="filterCategory('All')" class="cat-btn px-4 py-2 rounded-full text-sm font-medium bg-sky-600 text-white shadow-sm">All Products</button>
+      <button onclick="filterCategory('Cleaning Detergents')" class="cat-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-100 border">Cleaning Detergents</button>
+      <button onclick="filterCategory('Packaging')" class="cat-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-100 border">Packaging</button>
+      <button onclick="filterCategory('Tissues')" class="cat-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-100 border">Tissues (Toilet Paper)</button>
+      <button onclick="filterCategory('Detergents Raw Materials')" class="cat-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-100 border">Detergents Raw Materials</button>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- Dynamic Products Inserted Here -->
+    </div>
+  </main>
+
+  <!-- ADMIN VIEW -->
+  <main id="admin-view" class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Product Entry Form -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+          <i class="fa-solid fa-plus-circle text-sky-600 mr-2"></i>Add New Product
+        </h2>
+        <form id="add-product-form" onsubmit="handleAddProduct(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Product Title</label>
+            <input type="text" id="p-name" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm" placeholder="e.g., Dishwashing Liquid 5L"/>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Category</label>
+            <select id="p-category" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm bg-white">
+              <option value="Cleaning Detergents">Cleaning Detergents</option>
+              <option value="Packaging">Packaging</option>
+              <option value="Tissues">Tissues (Toilet Paper)</option>
+              <option value="Detergents Raw Materials">Detergents Raw Materials</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Price (R)</label>
+              <input type="number" id="p-price" step="0.01" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm" placeholder="150.00"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Unit/Size</label>
+              <input type="text" id="p-unit" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm" placeholder="e.g., 5L, Pack of 48"/>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Image URL</label>
+            <input type="url" id="p-image" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 outline-none text-sm" placeholder="https://images.unsplash.com/..."/>
+          </div>
+
+          <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-lg transition shadow-sm">
+            Save Product to Database
+          </button>
+        </form>
+      </div>
+
+      <!-- Inventory Database Table -->
+      <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center">
+            <i class="fa-solid fa-database text-sky-600 mr-2"></i>Product Database
+          </h2>
+          <button onclick="resetToDefaults()" class="text-xs text-red-600 hover:underline">Reset Default Data</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-600">
+                <th class="p-3">Product</th>
+                <th class="p-3">Category</th>
+                <th class="p-3">Price</th>
+                <th class="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body" class="divide-y divide-gray-100">
+              <!-- Admin Rows Inserted Here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- CART DRAWER / MODAL -->
+  <div id="cart-drawer" class="fixed inset-0 z-50 flex justify-end bg-black bg-opacity-50 hidden">
+    <div class="bg-white w-full max-w-md h-full flex flex-col justify-between shadow-2xl">
+      
+      <!-- Drawer Header -->
+      <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-lg flex items-center">
+          <i class="fa-solid fa-cart-shopping mr-2 text-sky-400"></i>Your Order List
+        </h3>
+        <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <!-- Cart Items Container -->
+      <div id="cart-items" class="p-4 flex-grow overflow-y-auto divide-y divide-gray-100">
+        <!-- Cart Items Inserted Here -->
+      </div>
+
+      <!-- Drawer Footer / Checkout -->
+      <div class="p-4 border-t border-gray-200 bg-gray-50 space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">WhatsApp Phone Number for Checkout</label>
+          <input type="text" id="merchant-phone" class="w-full px-3 py-2 border rounded-lg text-sm bg-white" value="27820000000" placeholder="e.g. 27820000000"/>
+          <span class="text-[10px] text-gray-500">Include country code without + or spaces (e.g., 27 for SA).</span>
+        </div>
+        <div class="flex justify-between items-center font-bold text-lg text-gray-900">
+          <span>Total Amount:</span>
+          <span id="cart-total" class="text-sky-600">R0.00</span>
+        </div>
+        <button onclick="checkoutWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-md">
+          <i class="fa-brands fa-whatsapp text-2xl"></i>
+          <span>Checkout on WhatsApp</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Initial Seed Data
+    const initialProducts = [
+      { id: 1, name: "Thick Bleach 5L", category: "Cleaning Detergents", price: 85.00, unit: "5 Litre", image: "https://images.unsplash.com/photo-1584483766114-2cea6facdf57?auto=format&fit=crop&w=400&q=80" },
+      { id: 2, name: "Pine Gel Cleaner 2kg", category: "Cleaning Detergents", price: 65.00, unit: "2 kg", image: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=400&q=80" },
+      { id: 3, name: "24-Pack 2-Ply Toilet Paper", category: "Tissues", price: 140.00, unit: "Pack of 24", image: "https://images.unsplash.com/photo-1584556812952-905ffd0c611a?auto=format&fit=crop&w=400&q=80" },
+      { id: 4, name: "500ml Clear PET Bottles", category: "Packaging", price: 120.00, unit: "Pack of 50", image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=400&q=80" },
+      { id: 5, name: "SLES 70% (Surfactant)", category: "Detergents Raw Materials", price: 450.00, unit: "5 kg Bucket", image: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=400&q=80" },
+      { id: 6, name: "Sulphonic Acid 96%", category: "Detergents Raw Materials", price: 620.00, unit: "5 kg Container", image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=400&q=80" }
+    ];
+
+    // Reactive Application State
+    let products = JSON.parse(localStorage.getItem('cpd_products')) || initialProducts;
+    let cart = JSON.parse(localStorage.getItem('cpd_cart')) || [];
+    let currentCategory = 'All';
+
+    // Application Initialization
+    function init() {
+      saveProducts();
+      renderStore();
+      renderAdminTable();
+      updateCartUI();
+    }
+
+    function saveProducts() {
+      localStorage.setItem('cpd_products', JSON.stringify(products));
+    }
+
+    function saveCart() {
+      localStorage.setItem('cpd_cart', JSON.stringify(cart));
+      updateCartUI();
+    }
+
+    // View Navigation
+    function switchView(view) {
+      const storeView = document.getElementById('store-view');
+      const adminView = document.getElementById('admin-view');
+      const btnStore = document.getElementById('btn-store-view');
+      const btnAdmin = document.getElementById('btn-admin-view');
+
+      if(view === 'store') {
+        storeView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        btnStore.className = "px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white";
+        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white";
+      } else {
+        storeView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium transition bg-sky-600 text-white";
+        btnStore.className = "px-4 py-1.5 rounded-md text-sm font-medium transition text-gray-300 hover:text-white";
+      }
+    }
+
+    // Store Logic & Render
+    function filterCategory(category) {
+      currentCategory = category;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if(btn.innerText.includes(category) || (category === 'All' && btn.innerText === 'All Products')) {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-sm font-medium bg-sky-600 text-white shadow-sm";
+        } else {
+          btn.className = "cat-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-gray-700 hover:bg-gray-100 border";
+        }
+      });
+      renderStore();
+    }
+
+    function renderStore() {
+      const grid = document.getElementById('product-grid');
+      grid.innerHTML = '';
+      
+      const filtered = currentCategory === 'All' 
+        ? products 
+        : products.filter(p => p.category === currentCategory);
+
+      if(filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">No products found in this category.</div>`;
+        return;
+      }
+
+      filtered.forEach(product => {
+        grid.innerHTML += `
+          <div class="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden flex flex-col justify-between transition">
+            <img src="${product.image}" alt="${product.name}" class="h-48 w-full object-cover"/>
+            <div class="p-4 flex-grow flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] font-bold tracking-wider text-sky-600 uppercase bg-sky-50 px-2 py-0.5 rounded">${product.category}</span>
+                <h3 class="font-semibold text-gray-800 text-base mt-2">${product.name}</h3>
+                <p class="text-xs text-gray-500 mt-1">Unit: ${product.unit}</p>
+              </div>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="text-lg font-bold text-gray-900">R${product.price.toFixed(2)}</span>
+                <button onclick="addToCart(${product.id})" class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 shadow-sm transition">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Admin Operations
+    function handleAddProduct(event) {
+      event.preventDefault();
+      const newProduct = {
+        id: Date.now(),
+        name: document.getElementById('p-name').value,
+        category: document.getElementById('p-category').value,
+        price: parseFloat(document.getElementById('p-price').value),
+        unit: document.getElementById('p-unit').value,
+        image: document.getElementById('p-image').value
+      };
+
+      products.push(newProduct);
+      saveProducts();
+      renderStore();
+      renderAdminTable();
+      document.getElementById('add-product-form').reset();
+    }
+
+    function removeProduct(id) {
+      products = products.filter(p => p.id !== id);
+      cart = cart.filter(item => item.id !== id);
+      saveProducts();
+      saveCart();
+      renderStore();
+      renderAdminTable();
+    }
+
+    function resetToDefaults() {
+      if(confirm("Reset database back to initial defaults?")) {
+        products = [...initialProducts];
+        saveProducts();
+        renderStore();
+        renderAdminTable();
+      }
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('admin-table-body');
+      tbody.innerHTML = '';
+
+      products.forEach(p => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="p-3 font-medium text-gray-800 flex items-center space-x-2">
+              <img src="${p.image}" class="w-8 h-8 rounded object-cover"/>
+              <span>${p.name}</span>
+            </td>
+            <td class="p-3 text-gray-600">${p.category}</td>
+            <td class="p-3 font-semibold text-gray-900">R${p.price.toFixed(2)}</td>
+            <td class="p-3 text-right">
+              <button onclick="removeProduct(${p.id})" class="text-red-500 hover:text-red-700 font-semibold text-xs px-2 py-1 border border-red-200 rounded hover:bg-red-50 transition">
+                <i class="fa-solid fa-trash mr-1"></i>Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Cart Management
+    function addToCart(id) {
+      const itemIndex = cart.findIndex(item => item.id === id);
+      if(itemIndex > -1) {
+        cart[itemIndex].qty += 1;
+      } else {
+        const product = products.find(p => p.id === id);
+        cart.push({ ...product, qty: 1 });
+      }
+      saveCart();
+      toggleCartDrawer(true);
+    }
+
+    function updateQty(id, delta) {
+      const itemIndex = cart.findIndex(item => item.id === id);
+      if(itemIndex > -1) {
+        cart[itemIndex].qty += delta;
+        if(cart[itemIndex].qty <= 0) {
+          cart.splice(itemIndex, 1);
+        }
+      }
+      saveCart();
+    }
+
+    function updateCartUI() {
+      const cartContainer = document.getElementById('cart-items');
+      const badge = document.getElementById('cart-count-badge');
+      const totalContainer = document.getElementById('cart-total');
+      
+      const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
+      const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+      if(totalQty > 0) {
+        badge.innerText = totalQty;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      totalContainer.innerText = `R${totalPrice.toFixed(2)}`;
+
+      if(cart.length === 0) {
+        cartContainer.innerHTML = `<div class="text-center py-12 text-gray-400">Your cart is empty.</div>`;
+        return;
+      }
+
+      cartContainer.innerHTML = '';
+      cart.forEach(item => {
+        cartContainer.innerHTML += `
+          <div class="py-3 flex items-center justify-between">
+            <div class="flex-grow pr-2">
+              <h4 class="font-semibold text-sm text-gray-800">${item.name}</h4>
+              <p class="text-xs text-gray-500">R${item.price.toFixed(2)} x ${item.qty}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">-</button>
+              <span class="text-sm font-semibold">${item.qty}</span>
+              <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">+</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function toggleCartDrawer(openState) {
+      const drawer = document.getElementById('cart-drawer');
+      if(openState === true) {
+        drawer.classList.remove('hidden');
+      } else if(openState === false) {
+        drawer.classList.add('hidden');
+      } else {
+        drawer.classList.toggle('hidden');
+      }
+    }
+
+    // WhatsApp Integration Engine
+    function checkoutWhatsApp() {
+      if(cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+      }
+
+      const phone = document.getElementById('merchant-phone').value.trim();
+      if(!phone) {
+        alert("Please specify a WhatsApp phone number.");
+        return;
+      }
+
+      let message = "*NEW ORDER REQUEST*\n";
+      message += "------------------------------\n";
+
+      cart.forEach((item, idx) => {
+        message += `${idx + 1}. *${item.name}* (${item.unit})\n`;
+        message += `   Qty: ${item.qty} x R${item.price.toFixed(2)} = R${(item.qty * item.price).toFixed(2)}\n`;
+      });
+
+      const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+      message += "------------------------------\n";
+      message += `*TOTAL AMOUNT: R${total.toFixed(2)}*\n\n`;
+      message += "Please provide payment instructions and delivery terms.";
+
+      const encodedMsg = encodeURIComponent(message);
+      const url = `https://wa.me/${phone}?text=${encodedMsg}`;
+      
+      window.open(url, '_blank');
+    }
+
+    // Run Initial Load
+    init();
+  </script>
+</body>
+</html>
